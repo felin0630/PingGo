@@ -1,4 +1,3 @@
-\
 let players=[],mode="player";
 const query=document.getElementById("query"),group=document.getElementById("group"),results=document.getElementById("results"),status=document.getElementById("status"),empty=document.getElementById("empty"),error=document.getElementById("error");
 const norm=v=>String(v||"").replace(/臺/g,"台").replace(/\s+/g,"").toLowerCase();

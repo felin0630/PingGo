@@ -33,6 +33,16 @@ const firstMatch = p => (p.matches || [])[0] || {};
 const playerVenue = p => p.venue || firstMatch(p).venue || EVENT.venue;
 const dateLabel = m => m.date || m.matchDate || m.dateRange || EVENT.dateRange;
 const sortKey = m => `${m.date || m.matchDate || m.sortDate || "9999-99-99"} ${m.time || "99:99"}`;
+function matchStart(m){
+  const date=String(m.date||m.matchDate||"").match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
+  const time=String(m.time||"").match(/^(\d{1,2}):(\d{2})$/);
+  return date&&time?new Date(Number(date[1]),Number(date[2])-1,Number(date[3]),Number(time[1]),Number(time[2])):null;
+}
+function isUpcomingMatch(m,p,now=new Date()){
+  const start=matchStart(m);
+  if(start)return start.getTime()>=now.getTime();
+  return !p.endDate||new Date(`${p.endDate}T23:59:59`).getTime()>=now.getTime();
+}
 
 function loadLists(){
   try {
@@ -139,8 +149,8 @@ function updateListsUI(){
 }
 
 function renderNext(){
-  const today=new Date().toLocaleDateString("sv-SE");
-  const entries = getSavedPlayers().filter(p=>(p.matches||[]).length&&(!p.endDate||p.endDate>=today)).map(p=>({p,m:firstMatch(p)}))
+  const now=new Date();
+  const entries = getSavedPlayers().map(p=>({p,m:(p.matches||[]).find(m=>isUpcomingMatch(m,p,now))})).filter(entry=>entry.m)
     .sort((a,b)=>sortKey(a.m).localeCompare(sortKey(b.m))||a.p.name.localeCompare(b.p.name,"zh-Hant"));
   el("nextCards").innerHTML = entries.length ? entries.slice(0,2).map((entry,i)=>`<article class="next-card"><div class="next-label">${i===0?"下一位":"再下一位"}</div><div class="next-time">${esc(entry.m.time || "時間待定")}</div><div class="next-name">${esc(entry.p.name)}</div><div class="next-school">🏫 ${esc(entry.p.school)}</div><div class="next-date">📅 比賽日期 ${esc(dateLabel(entry.m))}</div><div class="next-meta">${esc(entry.p.group)} · 場次 ${esc(entry.m.match)}</div><div class="next-meta">📍 ${esc(playerVenue(entry.p))}</div></article>`).join("") : `<div class="empty-card"><strong>${getSavedPlayers().length?"關注名單目前沒有未結束賽程":"先建立常用名單"}</strong><p class="sub">${getSavedPlayers().length?"已結束的組別仍可從選手查詢查看完整資料。":"貼上球隊或親友姓名後，這裡會依日期與時間顯示下一位、再下一位。"}</p></div>`;
 }

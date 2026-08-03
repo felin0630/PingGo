@@ -232,7 +232,10 @@ document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",()=>
 el("query").addEventListener("input",render); el("group").addEventListener("change",render);
 el("hideEnded").checked=state.hideEnded; el("hideEnded").addEventListener("change",event=>{state.hideEnded=event.target.checked;try{localStorage.setItem(HIDE_ENDED_KEY,String(state.hideEnded))}catch{}render()});
 el("searchButton").addEventListener("click",render); el("query").addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();render()}});
-el("sideManageLists").addEventListener("click",()=>el("listsDialog").showModal()); el("createList").addEventListener("click",createList);
+const utilityRail=document.querySelector(".utility-rail"), mobileMenuToggle=el("mobileMenuToggle");
+function closeMobileMenu(){utilityRail.classList.remove("open");mobileMenuToggle.setAttribute("aria-expanded","false");mobileMenuToggle.setAttribute("aria-label","展開功能選單")}
+mobileMenuToggle.addEventListener("click",()=>{const open=utilityRail.classList.toggle("open");mobileMenuToggle.setAttribute("aria-expanded",String(open));mobileMenuToggle.setAttribute("aria-label",open?"收合功能選單":"展開功能選單")});
+el("sideManageLists").addEventListener("click",()=>{closeMobileMenu();el("listsDialog").showModal()}); document.querySelector(".utility-tools a").addEventListener("click",closeMobileMenu); el("createList").addEventListener("click",createList);
 initFirebase();
 
 const DATA_URL = location.protocol === "file:"

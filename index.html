@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#78A4CB">
   <meta name="description" content="PingGo：乒出好成績！快速查詢選手、學校與常用名單的可能賽程。">
   <title>PingGo｜乒出好成績</title>
-  <link rel="stylesheet" href="./style.css?v=20260804-4">
+  <link rel="stylesheet" href="./style.css?v=20260804-5">
 </head>
 <body>
   <header class="hero">
@@ -74,15 +74,18 @@
   </main>
 
   <aside class="utility-rail" aria-label="常用功能">
-    <button id="sideManageLists" class="side-tool" type="button">
-      <span class="side-icon" aria-hidden="true">★</span>
-      <span class="side-copy"><strong>管理名單</strong><small>跨校關注</small></span>
-      <span id="listCount" class="side-count">0</span>
-    </button>
-    <a class="side-tool" href="https://drive.google.com/drive/folders/1hkj0eE1H2bOVYd6NrJNvzTuJ7tRfagmM" target="_blank" rel="noopener noreferrer">
-      <span class="side-icon" aria-hidden="true">✓</span>
-      <span class="side-copy"><strong>官方成績</strong><small>已完賽查詢</small></span>
-    </a>
+    <button id="mobileMenuToggle" class="mobile-menu-toggle" type="button" aria-expanded="false" aria-controls="utilityTools" aria-label="展開功能選單"><span aria-hidden="true">☰</span><span class="mobile-menu-text">功能</span></button>
+    <div id="utilityTools" class="utility-tools">
+      <button id="sideManageLists" class="side-tool" type="button">
+        <span class="side-icon" aria-hidden="true">★</span>
+        <span class="side-copy"><strong>管理名單</strong><small>跨校關注</small></span>
+        <span id="listCount" class="side-count">0</span>
+      </button>
+      <a class="side-tool" href="https://drive.google.com/drive/folders/1hkj0eE1H2bOVYd6NrJNvzTuJ7tRfagmM" target="_blank" rel="noopener noreferrer">
+        <span class="side-icon" aria-hidden="true">✓</span>
+        <span class="side-copy"><strong>賽事成績</strong><small>已完賽查詢</small></span>
+      </a>
+    </div>
   </aside>
 
   <dialog id="listsDialog">
@@ -106,7 +109,7 @@
   <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore-compat.js"></script>
-  <script src="./firebase-config.js?v=20260804-4"></script>
-  <script src="./app.js?v=20260804-4"></script>
+  <script src="./firebase-config.js?v=20260804-5"></script>
+  <script src="./app.js?v=20260804-5"></script>
 </body>
 </html>

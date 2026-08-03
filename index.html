@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#78A4CB">
   <meta name="description" content="PingGo：乒出好成績！快速查詢選手、學校與常用名單的可能賽程。">
   <title>PingGo｜乒出好成績</title>
-  <link rel="stylesheet" href="./style.css?v=20260804-3">
+  <link rel="stylesheet" href="./style.css?v=20260804-4">
 </head>
 <body>
   <header class="hero">
@@ -63,6 +63,11 @@
         <select id="group"><option value="all">全部組別</option></select>
         <button id="searchButton" class="primary-button search-button" type="button">查詢</button>
       </div>
+      <label class="ended-toggle" for="hideEnded">
+        <input id="hideEnded" type="checkbox" checked>
+        <span class="toggle-track" aria-hidden="true"><span></span></span>
+        <span><strong>隱藏已結束賽程</strong><small>關閉後可查看完整歷史資料</small></span>
+      </label>
       <p id="status" class="status" aria-live="polite">資料載入中…</p>
       <section id="results" class="results"></section>
     </section>
@@ -101,7 +106,7 @@
   <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore-compat.js"></script>
-  <script src="./firebase-config.js?v=20260804-3"></script>
-  <script src="./app.js?v=20260804-3"></script>
+  <script src="./firebase-config.js?v=20260804-4"></script>
+  <script src="./app.js?v=20260804-4"></script>
 </body>
 </html>

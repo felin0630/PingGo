@@ -2,6 +2,7 @@
 
 const STORAGE_KEY = "pinggo-lists-v1";
 const SCHOOL_STORAGE_KEY = "pinggo-favorite-schools-v1";
+const HIDE_ENDED_KEY = "pinggo-hide-ended-v1";
 const CLOUD_DOCUMENT_VERSION = 1;
 let cloudSaveTimer = 0;
 const eventFacts = document.getElementById("eventFacts");
@@ -24,7 +25,7 @@ const RESULT_FOLDERS = {
 };
 const resultFolder = p => RESULT_FOLDERS[Number.parseInt(p.group,10)] || "https://drive.google.com/drive/folders/1hkj0eE1H2bOVYd6NrJNvzTuJ7tRfagmM";
 const scheduleForGroup = group => GROUP_SCHEDULES.find(schedule=>schedule.groups.includes(group)) || EVENT;
-const state = { players: [], mode: "player", lists: loadLists(), favoriteSchools: loadFavoriteSchools(), activeSchool: "", firstMatchIndex: new Map(), user: null, cloudReady: false, applyingCloud: false };
+const state = { players: [], mode: "player", lists: loadLists(), favoriteSchools: loadFavoriteSchools(), hideEnded: loadHideEnded(), activeSchool: "", firstMatchIndex: new Map(), user: null, cloudReady: false, applyingCloud: false };
 const el = id => document.getElementById(id);
 const norm = value => String(value ?? "").normalize("NFKC").replace(/臺/g,"台").replace(/\s+/g,"").toLowerCase();
 const esc = value => String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[ch]);
@@ -59,6 +60,8 @@ function loadFavoriteSchools(){
   try { const stored=JSON.parse(localStorage.getItem(SCHOOL_STORAGE_KEY)); return Array.isArray(stored)?stored:[]; }
   catch { return []; }
 }
+function loadHideEnded(){ try { return localStorage.getItem(HIDE_ENDED_KEY)!=="false"; } catch { return true; } }
+function playerHasEnded(p){ return Boolean(p.endDate&&p.endDate<new Date().toLocaleDateString("sv-SE")); }
 function saveLists(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.lists)); updateListsUI(); queueCloudSave(); }
 function saveFavoriteSchools(){ localStorage.setItem(SCHOOL_STORAGE_KEY,JSON.stringify(state.favoriteSchools));updateListsUI();queueCloudSave() }
 
@@ -156,8 +159,9 @@ function renderNext(){
 }
 
 function matchRoute(p){
-  if (!(p.matches || []).length) return `<p class="sub">目前沒有可確認的場次資料。</p>`;
-  return `<div class="route">${p.matches.map((m,i)=>`<div class="match-row"><span class="date">📅 ${esc(dateLabel(m))}</span><span><span class="time">${esc(m.time || "時間待定")}</span> <span class="match">場次 ${esc(m.match)} · ${i===0?"首個可能場次":"若晉級"}</span></span></div>`).join("")}</div>`;
+  const matches=(p.matches||[]).map((m,index)=>({m,index})).filter(entry=>!state.hideEnded||isUpcomingMatch(entry.m,p));
+  if(!matches.length)return `<p class="sub">${state.hideEnded?"已結束場次目前已隱藏。關閉上方開關即可查看完整賽程。":"目前沒有可確認的場次資料。"}</p>`;
+  return `<div class="route">${matches.map(({m,index})=>`<div class="match-row"><span class="date">📅 ${esc(dateLabel(m))}</span><span><span class="time">${esc(m.time || "時間待定")}</span> <span class="match">場次 ${esc(m.match)} · ${index===0?"首個可能場次":"若晉級"}</span></span></div>`).join("")}</div>`;
 }
 function opponentBlock(p){
   const first=firstMatch(p); if(!first.match)return `<div class="opponent-box pending"><strong>首場對手</strong><p>目前沒有足夠場次資料可供配對。</p></div>`;
@@ -194,13 +198,13 @@ function quickSave(id){
 function renderPlayers(){
   if(!state.players.length){el("status").textContent="資料仍在載入，請稍候…";el("results").innerHTML="";return}
   const q=norm(el("query").value), group=el("group").value;
-  const found=state.players.filter(p=>(group==="all"||p.group===group)&&q&&norm(`${p.name}|${p.school}|${p.seed}`).includes(q)).slice(0,80);
+  const found=state.players.filter(p=>(!state.hideEnded||!playerHasEnded(p))&&(group==="all"||p.group===group)&&q&&norm(`${p.name}|${p.school}|${p.seed}`).includes(q)).slice(0,80);
   el("status").textContent=q?`找到 ${found.length} 位選手${found.length===80?"（僅顯示前 80 位）":""}`:"輸入姓名開始查詢";
   el("results").innerHTML=found.map(p=>playerCard(p)).join(""); wireResults();
 }
 function renderSchools(){
   const raw=el("query").value, terms=[...new Set(raw.split(/[\n,，、;；]+/).map(norm).filter(Boolean))], group=el("group").value, schools=new Map();
-  if(terms.length) state.players.forEach(p=>{if((group==="all"||p.group===group)&&terms.some(q=>norm(p.school).includes(q))){if(!schools.has(p.school))schools.set(p.school,[]);schools.get(p.school).push(p)}});
+  if(terms.length) state.players.forEach(p=>{if((!state.hideEnded||!playerHasEnded(p))&&(group==="all"||p.group===group)&&terms.some(q=>norm(p.school).includes(q))){if(!schools.has(p.school))schools.set(p.school,[]);schools.get(p.school).push(p)}});
   const entries=[...schools.entries()].slice(0,40); el("status").textContent=terms.length?`找到 ${entries.length} 所學校${terms.length>1?"（跨校查詢）":""}`:`輸入一所或多所學校開始查詢`;
   el("results").innerHTML=entries.map(([school,ps])=>{const sorted=[...ps].sort((a,b)=>sortKey(firstMatch(a)).localeCompare(sortKey(firstMatch(b)))||a.name.localeCompare(b.name,"zh-Hant"));return `<article class="card"><div class="card-top"><div><strong>${esc(school)}</strong><div class="sub">共 ${ps.length} 位 · 各年齡組依正確賽期排序</div></div><div class="school-actions"><span class="badge">球隊模式</span><button class="star-button" data-school-save="${esc(school)}" type="button" aria-label="收藏${esc(school)}">${isFavoriteSchool(school)?"★ 已收藏":"☆ 收藏學校"}</button></div></div>${sorted.map(p=>`<div class="school-player"><button class="player-link" data-player-id="${esc(playerId(p))}" data-school="${esc(school)}" type="button">${esc(p.name)}</button><span class="sub">${esc(dateLabel(firstMatch(p)))} ${esc(firstMatch(p).time||"時間待定")} · ${esc(playerVenue(p))}</span><button class="star-button" data-quick-save="${esc(playerId(p))}" type="button">${isSaved(p)?"★":"☆"}</button></div>`).join("")}</article>`}).join("");
   el("results").querySelectorAll("[data-school]").forEach(btn=>btn.addEventListener("click",()=>{state.activeSchool=btn.dataset.school})); wireResults();
@@ -226,6 +230,7 @@ function createList(){
 
 document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",()=>{state.mode=btn.dataset.mode;setTab(state.mode);el("query").value="";render()}));
 el("query").addEventListener("input",render); el("group").addEventListener("change",render);
+el("hideEnded").checked=state.hideEnded; el("hideEnded").addEventListener("change",event=>{state.hideEnded=event.target.checked;try{localStorage.setItem(HIDE_ENDED_KEY,String(state.hideEnded))}catch{}render()});
 el("searchButton").addEventListener("click",render); el("query").addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();render()}});
 el("sideManageLists").addEventListener("click",()=>el("listsDialog").showModal()); el("createList").addEventListener("click",createList);
 initFirebase();

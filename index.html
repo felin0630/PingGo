@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#78A4CB">
   <meta name="description" content="PingGo：乒出好成績！快速查詢選手、學校與常用名單的可能賽程。">
   <title>PingGo｜乒出好成績</title>
-  <link rel="stylesheet" href="./style.css?v=20260804-5">
+  <link rel="stylesheet" href="./style.css?v=20260804-6">
 </head>
 <body>
   <header class="hero">
@@ -41,35 +41,37 @@
       </details>
     </div>
 
-    <section class="next-board" aria-labelledby="nextTitle">
-      <div class="section-heading">
-        <div><p class="eyebrow">我的孩子、學長姐與朋友</p><h2 id="nextTitle">接下來是誰？</h2></div>
-      </div>
-      <div id="nextCards" class="next-grid"></div>
-    </section>
-
     <section class="search-panel" aria-labelledby="searchTitle">
       <div class="section-heading">
         <div><p class="eyebrow">快速查詢</p><h2 id="searchTitle">找選手或學校</h2></div>
       </div>
       <div class="tabs" role="tablist" aria-label="查詢方式">
+        <button class="tab" data-mode="schedule" role="tab" aria-selected="false" type="button">我的賽程</button>
         <button class="tab active" data-mode="player" role="tab" aria-selected="true" type="button">選手查詢</button>
         <button class="tab" data-mode="school" role="tab" aria-selected="false" type="button">球隊／學校查詢</button>
       </div>
-      <div class="search-row">
+      <section id="schedulePanel" class="next-board" aria-labelledby="nextTitle" hidden>
+        <div class="section-heading">
+          <div><p class="eyebrow">我的孩子、學長姐與朋友</p><h2 id="nextTitle">接下來是誰？</h2></div>
+        </div>
+        <div id="nextCards" class="next-grid"></div>
+      </section>
+      <div id="queryPanel">
+        <div class="search-row">
         <label class="sr-only" for="query">搜尋</label>
         <input id="query" type="search" placeholder="輸入選手姓名" autocomplete="off">
         <label class="sr-only" for="group">組別</label>
         <select id="group"><option value="all">全部組別</option></select>
         <button id="searchButton" class="primary-button search-button" type="button">查詢</button>
-      </div>
+        </div>
       <label class="ended-toggle" for="hideEnded">
         <input id="hideEnded" type="checkbox" checked>
         <span class="toggle-track" aria-hidden="true"><span></span></span>
         <span><strong>隱藏已結束賽程</strong><small>關閉後可查看完整歷史資料</small></span>
       </label>
       <p id="status" class="status" aria-live="polite">資料載入中…</p>
-      <section id="results" class="results"></section>
+        <section id="results" class="results"></section>
+      </div>
     </section>
   </main>
 
@@ -109,7 +111,7 @@
   <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore-compat.js"></script>
-  <script src="./firebase-config.js?v=20260804-5"></script>
-  <script src="./app.js?v=20260804-5"></script>
+  <script src="./firebase-config.js?v=20260804-6"></script>
+  <script src="./app.js?v=20260804-6"></script>
 </body>
 </html>

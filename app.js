@@ -128,7 +128,7 @@ function initFirebase(){
     firebase.auth().getRedirectResult().catch(error=>{console.error(error);setSyncStatus("Google 登入未完成，請再試一次")});
     firebase.auth().onAuthStateChanged(async user=>{
       state.user=user;updateAccountUI();
-      if(user)await loadAndMergeCloud();else setSyncStatus("已登出；新變更只保存在這台裝置");
+      if(user){await loadAndMergeCloud();state.mode="schedule";setTab("schedule");render()}else setSyncStatus("已登出；新變更只保存在這台裝置");
     });
   }catch(error){console.error(error);setSyncStatus("Firebase 設定有誤，暫用此裝置資料");}
 }
@@ -155,7 +155,8 @@ function renderNext(){
   const now=new Date();
   const entries = getSavedPlayers().map(p=>({p,m:(p.matches||[]).find(m=>isUpcomingMatch(m,p,now))})).filter(entry=>entry.m)
     .sort((a,b)=>sortKey(a.m).localeCompare(sortKey(b.m))||a.p.name.localeCompare(b.p.name,"zh-Hant"));
-  el("nextCards").innerHTML = entries.length ? entries.slice(0,2).map((entry,i)=>`<article class="next-card"><div class="next-label">${i===0?"下一位":"再下一位"}</div><div class="next-time">${esc(entry.m.time || "時間待定")}</div><div class="next-name">${esc(entry.p.name)}</div><div class="next-school">🏫 ${esc(entry.p.school)}</div><div class="next-date">📅 比賽日期 ${esc(dateLabel(entry.m))}</div><div class="next-meta">${esc(entry.p.group)} · 場次 ${esc(entry.m.match)}</div><div class="next-meta">📍 ${esc(playerVenue(entry.p))}</div></article>`).join("") : `<div class="empty-card"><strong>${getSavedPlayers().length?"關注名單目前沒有未結束賽程":"先建立常用名單"}</strong><p class="sub">${getSavedPlayers().length?"已結束的組別仍可從選手查詢查看完整資料。":"貼上球隊或親友姓名後，這裡會依日期與時間顯示下一位、再下一位。"}</p></div>`;
+  el("nextCards").innerHTML = entries.length ? entries.slice(0,2).map((entry,i)=>`<article class="next-card"><div class="next-label">${i===0?"下一位":"再下一位"}</div><div class="next-time">${esc(entry.m.time || "時間待定")}</div><div class="next-name">${esc(entry.p.name)}</div><div class="next-school">🏫 ${esc(entry.p.school)}</div><div class="next-date">📅 比賽日期 ${esc(dateLabel(entry.m))}</div><div class="next-meta">${esc(entry.p.group)} · 場次 ${esc(entry.m.match)}</div><div class="next-meta">📍 ${esc(playerVenue(entry.p))}</div></article>`).join("") : `<div class="empty-card"><button class="empty-list-button" data-open-lists type="button">${getSavedPlayers().length?"管理常用名單":"＋ 先建立常用名單"}</button><p class="sub">${getSavedPlayers().length?"關注名單目前沒有未結束賽程；完整資料仍可從選手查詢查看。":"貼上球隊或親友姓名後，這裡會依日期與時間顯示下一位、再下一位。"}</p></div>`;
+  el("nextCards").querySelector("[data-open-lists]")?.addEventListener("click",openListsDialog);
 }
 
 function matchRoute(p){
@@ -211,11 +212,16 @@ function renderSchools(){
   el("results").querySelectorAll("[data-school-save]").forEach(btn=>btn.addEventListener("click",()=>toggleFavoriteSchool(btn.dataset.schoolSave)));
 }
 function render(){
+  if(state.mode==="schedule"){renderNext();return}
   const q=norm(el("query").value);
   if(state.mode==="school"&&q&&state.players.some(p=>norm(p.name)===q)){state.mode="player";setTab("player")}
   state.mode==="player"?renderPlayers():renderSchools();
 }
-function setTab(mode){ document.querySelectorAll(".tab").forEach(b=>{const active=b.dataset.mode===mode;b.classList.toggle("active",active);b.setAttribute("aria-selected",String(active))}); el("query").placeholder=mode==="player"?"輸入選手姓名":"輸入一所或多所學校，以逗號分隔"; }
+function setTab(mode){
+  document.querySelectorAll(".tab").forEach(b=>{const active=b.dataset.mode===mode;b.classList.toggle("active",active);b.setAttribute("aria-selected",String(active))});
+  el("schedulePanel").hidden=mode!=="schedule";el("queryPanel").hidden=mode==="schedule";
+  if(mode!=="schedule")el("query").placeholder=mode==="player"?"輸入選手姓名":"輸入一所或多所學校，以逗號分隔";
+}
 
 function createList(){
   const name=el("listName").value.trim()||"我的名單";
@@ -226,6 +232,7 @@ function createList(){
   state.lists.push({name,playerIds:unique.map(playerId),names:unique.map(p=>p.name)}); saveLists(); renderNext();
   el("batchFeedback").textContent=`已建立「${name}」，加入 ${unique.length} 位${missing.length?`；找不到：${missing.join("、")}`:""}。`;
   el("listName").value="";el("batchNames").value="";
+  state.mode="schedule";setTab("schedule");render();el("listsDialog").close();
 }
 
 document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",()=>{state.mode=btn.dataset.mode;setTab(state.mode);el("query").value="";render()}));
@@ -234,8 +241,9 @@ el("hideEnded").checked=state.hideEnded; el("hideEnded").addEventListener("chang
 el("searchButton").addEventListener("click",render); el("query").addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();render()}});
 const utilityRail=document.querySelector(".utility-rail"), mobileMenuToggle=el("mobileMenuToggle");
 function closeMobileMenu(){utilityRail.classList.remove("open");mobileMenuToggle.setAttribute("aria-expanded","false");mobileMenuToggle.setAttribute("aria-label","展開功能選單")}
+function openListsDialog(){closeMobileMenu();const dialog=el("listsDialog");if(!dialog.open)dialog.showModal();el("batchNames").focus()}
 mobileMenuToggle.addEventListener("click",()=>{const open=utilityRail.classList.toggle("open");mobileMenuToggle.setAttribute("aria-expanded",String(open));mobileMenuToggle.setAttribute("aria-label",open?"收合功能選單":"展開功能選單")});
-el("sideManageLists").addEventListener("click",()=>{closeMobileMenu();el("listsDialog").showModal()}); document.querySelector(".utility-tools a").addEventListener("click",closeMobileMenu); el("createList").addEventListener("click",createList);
+el("sideManageLists").addEventListener("click",openListsDialog); document.querySelector(".utility-tools a").addEventListener("click",closeMobileMenu); el("createList").addEventListener("click",createList);
 initFirebase();
 
 const DATA_URL = location.protocol === "file:"

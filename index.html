@@ -3,61 +3,105 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#173a5e">
-  <title>PingGo｜全賽事查詢</title>
+  <meta name="theme-color" content="#78A4CB">
+  <meta name="description" content="PingGo：乒出好成績！快速查詢選手、學校與常用名單的可能賽程。">
+  <title>PingGo｜乒出好成績</title>
   <link rel="stylesheet" href="./style.css">
 </head>
-
 <body>
   <header class="hero">
-    <div class="wrap">
-      <h1>🏓 PingGo</h1>
-      <p>孩子專心比賽，賽程交給我們。</p>
+    <div class="wrap hero-inner">
+      <div>
+        <p class="hero-slogan">乒出好成績 !!</p>
+        <h1><span aria-hidden="true">🏓</span> PingGo</h1>
+      </div>
+      <div class="account-area">
+        <button id="authButton" class="header-button" type="button">使用 Google 登入</button>
+        <small id="syncStatus" class="sync-status" aria-live="polite">收藏目前儲存在這台裝置</small>
+      </div>
     </div>
   </header>
 
-  <section class="panel wrap">
-    <nav class="modes">
-      <button class="mode active" data-mode="player">選手查詢</button>
-      <button class="mode" data-mode="school">學校查詢</button>
-      <button class="mode" data-mode="match">場次查詢</button>
-    </nav>
-
-    <input
-      id="query"
-      type="search"
-      placeholder="輸入選手姓名、學校或籤位編號"
-      autocomplete="off"
-    >
-
-    <select id="group">
-      <option value="all">全部組別</option>
-    </select>
-  </section>
-
   <main class="wrap">
-    <div class="notice">
-      每位選手會顯示「若一路晉級」的全部可能場次。
-      後續對手及實際出賽資格，仍須以前一場紙本成績與大會隔日名單為準。
+    <details id="eventFacts" class="event-facts" open>
+      <summary><span><b>📅 比賽日期與場地</b><small>依性別、年齡查看組別</small></span><span class="summary-action">展開</span></summary>
+      <div class="event-grid" aria-label="賽事資訊">
+        <div><span aria-hidden="true">🏓</span><p><small>男9–11、女9｜北區賽（一）</small><strong>2026/7/17–7/22</strong><small>臺北市體育館一樓</small></p></div>
+        <div><span aria-hidden="true">🏓</span><p><small>男12/13/15、女13/15｜北區賽（二）</small><strong>2026/8/3–8/6</strong><small>臺北市體育館四樓</small></p></div>
+        <div><span aria-hidden="true">🏓</span><p><small>女10–12｜北區賽（三）</small><strong>2026/8/5–8/6</strong><small>臺北市體育館一樓</small></p></div>
+      </div>
+    </details>
+    <div class="data-help-wrap">
+      <details class="data-help">
+        <summary aria-label="查看資料說明" title="資料說明">!</summary>
+        <div class="data-tooltip" role="note">
+          <strong>資料說明</strong>
+          <p>網站依官方最新「北區比賽組別分佈圖」，按性別與年齡套用日期及樓層。籤表未標示各場次落在賽期中的確切日期，因此目前顯示該組完整賽期；實際出賽仍以大會每日公告為準。</p>
+        </div>
+      </details>
     </div>
 
-    <div id="status" class="status">資料載入中…</div>
+    <section class="next-board" aria-labelledby="nextTitle">
+      <div class="section-heading">
+        <div><p class="eyebrow">我的孩子、學長姐與朋友</p><h2 id="nextTitle">接下來是誰？</h2></div>
+      </div>
+      <div id="nextCards" class="next-grid"></div>
+    </section>
 
-    <section id="results"></section>
-
-    <div id="empty" class="message" hidden>
-      找不到符合資料。
-    </div>
-
-    <div id="error" class="message" hidden>
-      資料載入失敗，請重新整理。
-    </div>
+    <section class="search-panel" aria-labelledby="searchTitle">
+      <div class="section-heading">
+        <div><p class="eyebrow">快速查詢</p><h2 id="searchTitle">找選手或學校</h2></div>
+      </div>
+      <div class="tabs" role="tablist" aria-label="查詢方式">
+        <button class="tab active" data-mode="player" role="tab" aria-selected="true" type="button">選手查詢</button>
+        <button class="tab" data-mode="school" role="tab" aria-selected="false" type="button">球隊／學校查詢</button>
+      </div>
+      <div class="search-row">
+        <label class="sr-only" for="query">搜尋</label>
+        <input id="query" type="search" placeholder="輸入選手姓名" autocomplete="off">
+        <label class="sr-only" for="group">組別</label>
+        <select id="group"><option value="all">全部組別</option></select>
+        <button id="searchButton" class="primary-button search-button" type="button">查詢</button>
+      </div>
+      <p id="status" class="status" aria-live="polite">資料載入中…</p>
+      <section id="results" class="results"></section>
+    </section>
   </main>
 
-  <footer>
-    PingGo MVP・北區賽公開籤表整理
-  </footer>
+  <aside class="utility-rail" aria-label="常用功能">
+    <button id="sideManageLists" class="side-tool" type="button">
+      <span class="side-icon" aria-hidden="true">★</span>
+      <span class="side-copy"><strong>管理名單</strong><small>跨校關注</small></span>
+      <span id="listCount" class="side-count">0</span>
+    </button>
+    <a class="side-tool" href="https://drive.google.com/drive/folders/1hkj0eE1H2bOVYd6NrJNvzTuJ7tRfagmM" target="_blank" rel="noopener noreferrer">
+      <span class="side-icon" aria-hidden="true">✓</span>
+      <span class="side-copy"><strong>官方成績</strong><small>已完賽查詢</small></span>
+    </a>
+  </aside>
 
+  <dialog id="listsDialog">
+    <form method="dialog" class="dialog-shell">
+      <div class="dialog-head"><div><p class="eyebrow">可跨國小與國中</p><h2>我的跨校關注名單</h2></div><button class="icon-button" value="cancel" aria-label="關閉">×</button></div>
+      <div class="field"><label for="listName">名單名稱</label><input id="listName" placeholder="例如：我的孩子與學長姐"></div>
+      <div class="field"><label for="batchNames">批次貼上姓名</label><textarea id="batchNames" rows="7" placeholder="李亮愉&#10;國小學長姓名&#10;已升國中的學長姐姓名"></textarea><small>可以混合不同國小與國中的選手。只會加入目前資料中能精確找到的姓名；同名選手會全部列入供你確認。</small></div>
+      <button id="createList" class="primary-button" type="button">建立名單</button>
+      <p id="batchFeedback" class="feedback" aria-live="polite"></p>
+      <div id="favoriteSchools" class="favorite-schools"></div>
+      <div id="savedLists" class="saved-lists"></div>
+    </form>
+  </dialog>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <span>PingGo MVP · 資料以 <a href="http://www.ttta.tw/" target="_blank" rel="noopener noreferrer">台灣乒乓球總會官方公告</a> 為準</span>
+      <span>追蹤我的 Threads：<a href="https://www.threads.com/@i.am_fe_" target="_blank" rel="noopener noreferrer">@i.am_fe_</a></span>
+    </div>
+  </footer>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore-compat.js"></script>
+  <script src="./firebase-config.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>

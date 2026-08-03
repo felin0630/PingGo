@@ -34,8 +34,21 @@ const playerVenue = p => p.venue || firstMatch(p).venue || EVENT.venue;
 const dateLabel = m => m.date || m.matchDate || m.dateRange || EVENT.dateRange;
 const sortKey = m => `${m.date || m.matchDate || m.sortDate || "9999-99-99"} ${m.time || "99:99"}`;
 
-function loadLists(){ try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; } }
-function loadFavoriteSchools(){ try { return JSON.parse(localStorage.getItem(SCHOOL_STORAGE_KEY)) || []; } catch { return []; } }
+function loadLists(){
+  try {
+    const stored=JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if(!Array.isArray(stored))return [];
+    return stored.map((list,index)=>({
+      name:String(list?.name||`我的名單 ${index+1}`),
+      playerIds:Array.isArray(list?.playerIds)?list.playerIds:[],
+      names:Array.isArray(list?.names)?list.names:[]
+    }));
+  } catch { return []; }
+}
+function loadFavoriteSchools(){
+  try { const stored=JSON.parse(localStorage.getItem(SCHOOL_STORAGE_KEY)); return Array.isArray(stored)?stored:[]; }
+  catch { return []; }
+}
 function saveLists(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.lists)); updateListsUI(); queueCloudSave(); }
 function saveFavoriteSchools(){ localStorage.setItem(SCHOOL_STORAGE_KEY,JSON.stringify(state.favoriteSchools));updateListsUI();queueCloudSave() }
 
@@ -107,7 +120,7 @@ function initFirebase(){
   }catch(error){console.error(error);setSyncStatus("Firebase 設定有誤，暫用此裝置資料");}
 }
 function getSavedPlayers(){
-  const ids = new Set(state.lists.flatMap(list => list.playerIds));
+  const ids = new Set(state.lists.flatMap(list => list.playerIds || []));
   const schools = new Set(state.favoriteSchools);
   return state.players.filter(p => ids.has(playerId(p)) || schools.has(p.school));
 }
@@ -117,7 +130,7 @@ function scheduleEntries(players){
 }
 
 function updateListsUI(){
-  el("listCount").textContent = new Set(state.lists.flatMap(x=>x.playerIds)).size + state.favoriteSchools.length;
+  el("listCount").textContent = new Set(state.lists.flatMap(x=>x.playerIds || [])).size + state.favoriteSchools.length;
   el("favoriteSchools").innerHTML=state.favoriteSchools.length?`<section class="saved-list"><div class="saved-list-head"><div><strong>★ 收藏的球隊／學校</strong><div class="sub">會自動納入下一位排序</div></div></div><div class="chips">${state.favoriteSchools.map(school=>`<button class="chip school-chip" data-remove-school="${esc(school)}" type="button">${esc(school)} ×</button>`).join("")}</div></section>`:`<p class="sub">尚未收藏學校。請在學校查詢結果按 ☆。</p>`;
   el("favoriteSchools").querySelectorAll("[data-remove-school]").forEach(btn=>btn.addEventListener("click",()=>toggleFavoriteSchool(btn.dataset.removeSchool)));
   const saved = el("savedLists");
@@ -143,7 +156,7 @@ function opponentBlock(p){
   if(candidates.length>1)return `<div class="opponent-box pending"><strong>首場對手需核對</strong><p>目前同場次出現 ${candidates.length+1} 位選手，可能是原始籤表解析異常，請以官方籤表為準。</p></div>`;
   return `<div class="opponent-box pending"><strong>首場對手尚未確定</strong><p>可能為輪空，或需等待前一場勝者產生；請以大會最新公告為準。</p></div>`;
 }
-function isSaved(p){ return state.lists.some(list=>list.playerIds.includes(playerId(p))); }
+function isSaved(p){ return state.lists.some(list=>(list.playerIds || []).includes(playerId(p))); }
 function isFavoriteSchool(school){return state.favoriteSchools.includes(school)}
 function toggleFavoriteSchool(school){const index=state.favoriteSchools.indexOf(school);if(index>=0)state.favoriteSchools.splice(index,1);else state.favoriteSchools.push(school);saveFavoriteSchools();renderNext();render()}
 function playerCard(p,back=false){
